@@ -7,7 +7,7 @@
 //    nie ma miejsca: ` - ' na wewnętrznych kolumnach, = ] \ w prawym dolnym rogu (67 68 69).
 //  - NAV (przytrzymaj 65, szeroki klawisz prawego kciuka): strzałki na I J K L, Ctrl/Cmd/Shift pod lewą ręką, wytnij/kopiuj/wklej na dolnym rzędzie.
 //  - Option (Opt) tylko w BASE (57) — do polskich znaków na Macu.
-//  - ADJ (Fn): przytrzymaj FN (59). Bluetooth, media, F1-F12, BOOT (40) do wgrywania firmware.
+//  - ADJ (Fn): przytrzymaj FN (59). Bluetooth, media, F1-F12, BOOT do wgrywania firmware: 40 = lewa połówka, 55 = prawa połówka.
 //
 //  - Wyłączone (&none na każdej warstwie): 46 47 48 49 62 63 — za daleko dla kciuka.
 //
@@ -66,7 +66,7 @@
    &kp F1       &kp F2       &kp F3       &kp F4       &kp F5       &kp F6                                 &kp F7       &kp F8       &kp F9       &kp F10      &kp F11      &kp F12
    &trans       &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_CLR   &none        &trans                    &trans       &kp C_PREV   &kp C_PP     &kp C_NEXT   &kp C_MUTE   &none        &trans
    &trans       &out OUT_USB &out OUT_BLE &none        &none        &none        &trans                    &trans       &kp C_VOL_DN &kp C_VOL_UP &kp C_BRI_DN &kp C_BRI_UP &none        &trans
-   &bootloader  &trans       &trans       &trans       &trans       &trans       &none        &none        &none        &none        &trans       &trans       &trans       &trans       &trans       &trans
+   &bootloader  &trans       &trans       &trans       &trans       &trans       &none        &none        &none        &none        &trans       &trans       &trans       &trans       &trans       &bootloader
    &trans       &trans       &trans       &trans       &trans       &trans       &none        &none        &trans       &trans       &trans       &trans       &trans       &trans
             >;
         };
