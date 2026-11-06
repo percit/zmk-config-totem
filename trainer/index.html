@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trener pisania — Redox / Totem / Corne</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <h1>Trener pisania <span>ZMK</span></h1>
+  <div class="seg" id="kb">
+    <button data-kb="redox">Redox</button><button data-kb="totem">Totem</button><button data-kb="corne">Corne</button>
+  </div>
+  <div class="seg" id="lang">
+    <button data-lang="pl">PL</button><button data-lang="en">EN</button>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-mode="learn">Nauka</button>
+  <button data-mode="weak">Słabe punkty</button>
+  <button data-mode="sentences">Zdania</button>
+  <button data-mode="symbols">Symbole</button>
+  <button data-mode="test">Test 1 min</button>
+</nav>
+
+<main>
+  <section class="trainer">
+    <div class="stats">
+      <div><b id="s-cpm">–</b><small>znaki/min</small></div>
+      <div><b id="s-wpm">–</b><small>słowa/min</small></div>
+      <div><b id="s-acc">–</b><small>dokładność</small></div>
+      <div><b id="s-today">0:00</b><small>dziś</small></div>
+    </div>
+
+    <div id="letters" class="letters"></div>
+    <div id="status" class="status"></div>
+
+    <div id="line" class="line" tabindex="0"></div>
+    <div id="hint" class="hint"></div>
+    <div id="msg" class="msg"></div>
+
+    <div class="kbd-head">
+      <div class="seg" id="view">
+        <button data-view="finger">Palce</button><button data-view="heat">Heatmapa</button>
+      </div>
+      <span class="legend"></span>
+    </div>
+    <svg id="kbd" class="kbd" viewBox="0 0 1860 640"></svg>
+  </section>
+
+  <aside>
+    <details open>
+      <summary>Historia (30 dni)</summary>
+      <svg id="hist" class="hist" viewBox="0 0 600 220"></svg>
+      <p id="hist-sum" class="small"></p>
+    </details>
+
+    <details open>
+      <summary>Pomyłki</summary>
+      <table id="conf" class="conf"></table>
+      <button id="weak-go">Ćwicz słabe punkty</button>
+    </details>
+
+    <details>
+      <summary>Ustawienia</summary>
+      <form id="settings" class="settings" onsubmit="return false">
+        <label><input type="checkbox" name="caps"> Wielkie litery</label>
+        <label><input type="checkbox" name="punct"> Wstawiaj interpunkcję</label>
+        <label><input type="checkbox" name="kbd"> Pokaż klawiaturę</label>
+        <label>Cel znaki/min <input type="number" name="target" min="60" max="600" step="10"></label>
+        <label>Dokładność % <input type="number" name="acc" min="80" max="100"></label>
+        <label>Tempo % celu <input type="number" name="tempo" min="0" max="100" step="5"></label>
+        <label>Wyjście awaryjne (min) <input type="number" name="escape" min="0" max="120"></label>
+      </form>
+      <p class="small">Litera jest „pewna”, gdy ma min. 30 prób, dokładność ≥ ustawionej i tempo ≥ Tempo % celu.
+        Gdy wszystkie odblokowane litery są pewne, dochodzi następna. Wyjście awaryjne: gdy brakuje tylko tempa,
+        następna litera dochodzi po tylu minutach ćwiczenia. Kliknij zablokowaną literę, aby odblokować ręcznie.</p>
+      <div class="row">
+        <button id="unlock-next">Odblokuj następną literę</button>
+        <button id="reset" class="danger">Wyczyść postęp tego języka</button>
+      </div>
+      <div class="row">
+        <button id="export">Eksportuj postęp</button>
+        <label class="file">Importuj postęp <input type="file" id="import" accept=".json"></label>
+      </div>
+    </details>
+
+    <details>
+      <summary>Jak to działa</summary>
+      <ul class="small">
+        <li>Polskie słowa są bez polskich znaków (jak w Twoich notatkach).</li>
+        <li>Nie ma Backspace. Po błędzie wpisz poprawny znak.</li>
+        <li>Esc = zacznij linię od nowa.</li>
+        <li>Każda klawiatura ma osobny postęp. Corne to szkic keymapy (<code>keymaps/corne.keymap</code>) — Totem + zewnętrzne kolumny.</li>
+        <li>Słowa pochodzą z Twoich notatek. Układ pochodzi z keymapy ZMK (<span id="src"></span>).</li>
+        <li>Postęp zapisuje się w przeglądarce (localStorage).</li>
+      </ul>
+    </details>
+  </aside>
+</main>
+
+<script src="js/layouts/redox.js"></script>
+<script src="js/layouts/totem.js"></script>
+<script src="js/layouts/corne.js"></script>
+<script src="js/words.js"></script>
+<script src="js/snippets.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

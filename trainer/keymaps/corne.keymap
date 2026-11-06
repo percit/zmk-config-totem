@@ -1,0 +1,49 @@
+// CORNE (3x6_3, 42 klawisze) — SZKIC dla trenera. Nie ma jeszcze fizycznej klawiatury.
+// Zasada: ten sam układ co Totem (config/totem.keymap na master), plus zewnętrzne kolumny.
+//  - Zewnętrzne kolumny: Tab, Ctrl, Shift (lewa), Backspace, ', Opt (prawa).
+//  - NAV (lewy środkowy kciuk) i SYM (prawy środkowy kciuk) — jak na Totemie.
+//  - Klawisze SYM w dolnym rzędzie na zewnątrz (` i |) są tam, gdzie na Totemie.
+// Kolejność: 3 rzędy po 12, potem 6 kciuków.
+
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/keys.h>
+
+#define BASE 0
+#define NAV  1
+#define SYM  2
+
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+
+        base_layer {
+            display-name = "BASE";
+            bindings = <
+   &kp TAB   &kp Q     &kp W     &kp E     &kp R     &kp T        &kp Y     &kp U     &kp I     &kp O     &kp P     &kp BSPC
+   &kp LCTRL &kp A     &kp S     &kp D     &kp F     &kp G        &kp H     &kp J     &kp K     &kp L     &kp SEMI  &kp SQT
+   &kp LSHFT &kp Z     &kp X     &kp C     &kp V     &kp B        &kp N     &kp M     &kp COMMA &kp DOT   &kp FSLH  &kp RALT
+                                 &kp LGUI  &mo NAV   &kp SPACE    &kp RET   &mo SYM   &kp BSPC
+            >;
+        };
+
+        nav_layer {
+            display-name = "NAV";
+            bindings = <
+   &trans    &kp ESC   &none     &none     &none     &none        &kp LG(LEFT) &kp PG_DN &kp PG_UP &kp LG(RIGHT) &kp DEL &trans
+   &trans    &kp LCTRL &kp LALT  &kp LGUI  &kp LSHFT &kp TAB      &kp LEFT  &kp DOWN  &kp UP    &kp RIGHT &none     &trans
+   &trans    &kp LG(Z) &kp LG(X) &kp LG(C) &kp LG(V) &kp LG(LS(Z)) &none    &none     &none     &none     &none     &trans
+                                 &trans    &trans    &trans       &trans    &trans    &trans
+            >;
+        };
+
+        sym_layer {
+            display-name = "SYM";
+            bindings = <
+   &trans    &kp N1    &kp N2    &kp N3    &kp N4    &kp N5       &kp N6    &kp N7    &kp N8    &kp N9    &kp N0    &trans
+   &trans    &kp EXCL  &kp AT    &kp HASH  &kp DLLR  &kp PRCNT    &kp CARET &kp AMPS  &kp STAR  &kp LPAR  &kp RPAR  &trans
+   &kp GRAVE &kp TILDE &kp SQT   &kp DQT   &kp MINUS &kp EQUAL    &kp LBKT  &kp RBKT  &kp LBRC  &kp RBRC  &kp BSLH  &kp PIPE
+                                 &trans    &trans    &trans       &trans    &trans    &trans
+            >;
+        };
+    };
+};
