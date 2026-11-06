@@ -1,30 +1,15 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="/docs/images/TOTEM_logo_dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="/docs/images/TOTEM_logo_bright.svg">
-  <img alt="TOTEM logo font" src="/docs/images/TOTEM_logo_bright.svg">
-</picture>
+# ZMK — Redox (gałąź `redox`)
 
-# ZMK CONFIG FOR THE TOTEM SPLIT KEYBOARD
+Config ZMK dla Redoxa (Falbatech, nice!nano v2). Repo ma jedną gałąź na klawiaturę:
+`totem`, `redox` (ta), później `corne`. Na `master` jest trener pisania i opis repo.
 
-[Here](https://github.com/GEIGEIGEIST/totem) you can find the hardware files and build guide.\
-[Here](https://github.com/GEIGEIGEIST/qmk-config-totem) you can find the QMK config for the TOTEM.
+- Keymapa: `config/redox.keymap` (opis warstw w komentarzu na górze pliku).
+- Shield `redox` pochodzi z ZMK, więc tu nie ma `config/boards`.
 
-TOTEM is a 38 key column-staggered split keyboard running [ZMK](https://zmk.dev/) or [QMK](https://docs.qmk.fm/). It's meant to be used with a SEEED XIAO BLE or RP2040.
+## Wgrywanie
 
-
-![TOTEM layout](/docs/images/TOTEM_layout.svg)
-
-
-
-## HOW TO USE
-
-- fork this repo
-- `git clone` your repo, to create a local copy on your PC (you can use the [command line](https://www.atlassian.com/git/tutorials) or [github desktop](https://desktop.github.com/))
-- adjust the totem.keymap file (find all the keycodes on [the zmk docs pages](https://zmk.dev/docs/codes/))
-- `git push` your repo to your fork
-- on the GitHub page of your fork navigate to "Actions"
-- scroll down and unzip the `firmware.zip` archive that contains the latest firmware
-- connect the left half of the TOTEM to your PC, press reset twice
-- the keyboard should now appear as a mass storage device
-- drag'n'drop the `totem_left-seeeduino_xiao_ble-zmk.uf2` file from the archive onto the storage device
-- repeat this process with the right half and the `totem_right-seeeduino_xiao_ble-zmk.uf2` file.
+1. Wypchnij zmiany na gałąź `redox`.
+2. Na GitHubie otwórz Actions i pobierz `firmware.zip` z ostatniego buildu.
+3. Podłącz lewą połówkę i naciśnij reset dwa razy. Pojawi się dysk `NICENANO`.
+4. Przeciągnij `redox_left-nice_nano_v2-zmk.uf2` na dysk.
+5. Powtórz dla prawej połówki z `redox_right-nice_nano_v2-zmk.uf2`.

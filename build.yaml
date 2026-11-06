@@ -1,11 +1,6 @@
+# Gałąź `redox`: buduje tylko Redoxa (nice!nano v2).
 # Pinned to ZMK v0.3 (same revision in config/west.yml and .github/workflows/build.yml)
 include:
-  - board: seeeduino_xiao_ble
-    shield: totem_left
-  - board: seeeduino_xiao_ble
-    shield: totem_right
-  - board: seeeduino_xiao_ble
-    shield: settings_reset
   - board: nice_nano_v2
     shield: redox_left
   - board: nice_nano_v2
