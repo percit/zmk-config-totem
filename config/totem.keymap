@@ -2,8 +2,9 @@
 //
 // Zasady:
 //  - BASE = zwykłe QWERTY, żadnych mod-tapów na literach.
-//  - Lewy środkowy kciuk (przytrzymaj) = NAV: strzałki + Ctrl/Opt/Cmd/Shift pod lewą ręką + kopiuj/wklej.
-//  - Prawy środkowy kciuk (przytrzymaj) = SYM: cyfry, symbole, nawiasy.
+//  - Prawy środkowy kciuk (przytrzymaj) = NAV, jak na Redoxie: strzałki na I J K L (odwrócone T),
+//    Ctrl/Opt/Cmd/Shift pod lewą ręką + kopiuj/wklej.
+//  - Lewy środkowy kciuk (przytrzymaj) = SYM: cyfry, symbole, nawiasy.
 //  - Oba środkowe kciuki naraz = ADJ: Bluetooth/USB, media, F-klawisze, bootloader.
 //  - Esc = Q+W naraz (albo Q na warstwie NAV).
 //
@@ -50,30 +51,30 @@
 //     ┌───────┼───────┼───────┼───────┼───────┼───────┤   ├───────┼───────┼───────┼───────┼───────┼───────┐
 //     │ SHIFT │   Z   │   X   │   C   │   V   │   B   │   │   N   │   M   │   ,   │   .   │   /   │  OPT  │
 //     └───────┴───────┴───────┼───────┼───────┼───────┤   ├───────┼───────┼───────┼───────┴───────┴───────┘
-//                             │  CMD  │  NAV  │ SPACE │   │ ENTER │  SYM  │ BSPC  │
+//                             │  CMD  │  SYM  │ SPACE │   │ ENTER │  NAV  │ BSPC  │
 //                             └───────┴───────┴───────┘   └───────┴───────┴───────┘
             bindings = <
                 &kp Q     &kp W     &kp E     &kp R     &kp T        &kp Y     &kp U     &kp I     &kp O     &kp P
                 &kp A     &kp S     &kp D     &kp F     &kp G        &kp H     &kp J     &kp K     &kp L     &kp SEMI
       &kp LSHFT &kp Z     &kp X     &kp C     &kp V     &kp B        &kp N     &kp M     &kp COMMA &kp DOT   &kp FSLH  &kp RALT
-                                    &kp LGUI  &mo NAV   &kp SPACE    &kp RET   &mo SYM   &kp BSPC
+                                    &kp LGUI  &mo SYM   &kp SPACE    &kp RET   &mo NAV   &kp BSPC
             >;
         };
 
         nav_layer {
             display-name = "NAV";
 //             ┌───────┬───────┬───────┬───────┬───────┐   ┌───────┬───────┬───────┬───────┬───────┐
-//             │  ESC  │       │       │       │       │   │ LINE< │ PG DN │ PG UP │ LINE> │  DEL  │
+//             │  ESC  │       │       │       │       │   │ PG UP │ LINE< │   ↑   │ LINE> │  DEL  │
 //             ├───────┼───────┼───────┼───────┼───────┤   ├───────┼───────┼───────┼───────┼───────┤
-//             │ CTRL  │  OPT  │  CMD  │ SHIFT │  TAB  │   │   ←   │   ↓   │   ↑   │   →   │       │
+//             │ CTRL  │  OPT  │  CMD  │ SHIFT │  TAB  │   │ PG DN │   ←   │   ↓   │   →   │       │
 //     ┌───────┼───────┼───────┼───────┼───────┼───────┤   ├───────┼───────┼───────┼───────┼───────┼───────┐
 //     │       │ UNDO  │  CUT  │ COPY  │ PASTE │ REDO  │   │       │       │       │       │       │       │
 //     └───────┴───────┴───────┼───────┼───────┼───────┤   ├───────┼───────┼───────┼───────┴───────┴───────┘
-//                             │       │ (hold)│       │   │       │       │       │
+//                             │       │       │       │   │       │ (hold)│       │
 //                             └───────┴───────┴───────┘   └───────┴───────┴───────┘
             bindings = <
-                &kp ESC   &none     &none     &none     &none        &kp LG(LEFT) &kp PG_DN &kp PG_UP &kp LG(RIGHT) &kp DEL
-                &kp LCTRL &kp LALT  &kp LGUI  &kp LSHFT &kp TAB      &kp LEFT  &kp DOWN  &kp UP    &kp RIGHT &none
+                &kp ESC   &none     &none     &none     &none        &kp PG_UP &kp LG(LEFT) &kp UP    &kp LG(RIGHT) &kp DEL
+                &kp LCTRL &kp LALT  &kp LGUI  &kp LSHFT &kp TAB      &kp PG_DN &kp LEFT  &kp DOWN  &kp RIGHT &none
       &trans    &kp LG(Z) &kp LG(X) &kp LG(C) &kp LG(V) &kp LG(LS(Z)) &none    &none     &none     &none     &none     &trans
                                     &trans    &trans    &trans       &trans    &trans    &trans
             >;
@@ -88,7 +89,7 @@
 //     ┌───────┼───────┼───────┼───────┼───────┼───────┤   ├───────┼───────┼───────┼───────┼───────┼───────┐
 //     │   `   │   ~   │   '   │   "   │   -   │   =   │   │   [   │   ]   │   {   │   }   │   \   │   |   │
 //     └───────┴───────┴───────┼───────┼───────┼───────┤   ├───────┼───────┼───────┼───────┴───────┴───────┘
-//                             │       │       │       │   │       │ (hold)│       │
+//                             │       │ (hold)│       │   │       │       │       │
 //                             └───────┴───────┴───────┘   └───────┴───────┴───────┘
 //  _ = Shift + -     + = Shift + =     : = Shift + ;     < > ? = Shift + , . /
             bindings = <
