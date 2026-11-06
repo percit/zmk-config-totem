@@ -23,6 +23,7 @@
   <button data-mode="sentences">Zdania</button>
   <button data-mode="symbols">Symbole</button>
   <button data-mode="test">Test 1 min</button>
+  <button data-mode="shortcuts">Skróty</button>
 </nav>
 
 <main>
@@ -38,6 +39,18 @@
     <div id="status" class="status"></div>
 
     <div id="line" class="line" tabindex="0"></div>
+    <div id="sc" class="sc" hidden>
+      <div class="sc-top">
+        <select id="sc-group">
+          <option value="all">Wszystkie skróty</option><option>Nawigacja</option><option>Zaznaczanie</option>
+          <option>Edycja</option><option>VS Code</option>
+        </select>
+        <span id="sc-count" class="small"></span>
+      </div>
+      <div id="sc-desc" class="sc-desc"></div>
+      <div id="sc-combo" class="sc-combo"></div>
+      <div id="sc-res" class="sc-res"></div>
+    </div>
     <div id="hint" class="hint"></div>
     <div id="msg" class="msg"></div>
 
@@ -48,6 +61,9 @@
       <span class="legend"></span>
     </div>
     <svg id="kbd" class="kbd" viewBox="0 0 1860 640"></svg>
+
+    <h2 class="layers-h">Wszystkie warstwy</h2>
+    <div id="layers" class="layers"></div>
   </section>
 
   <aside>
@@ -58,7 +74,7 @@
     </details>
 
     <details open>
-      <summary>Pomyłki</summary>
+      <summary id="conf-title">Pomyłki</summary>
       <table id="conf" class="conf"></table>
       <button id="weak-go">Ćwicz słabe punkty</button>
     </details>
@@ -69,6 +85,11 @@
         <label><input type="checkbox" name="caps"> Wielkie litery</label>
         <label><input type="checkbox" name="punct"> Wstawiaj interpunkcję</label>
         <label><input type="checkbox" name="kbd"> Pokaż klawiaturę</label>
+        <label>Słowa <select name="words">
+          <option value="common">popularne (napisy filmowe)</option>
+          <option value="notes">z moich notatek</option>
+          <option value="both">oba</option>
+        </select></label>
         <label>Cel znaki/min <input type="number" name="target" min="60" max="600" step="10"></label>
         <label>Dokładność % <input type="number" name="acc" min="80" max="100"></label>
         <label>Tempo % celu <input type="number" name="tempo" min="0" max="100" step="5"></label>
@@ -94,7 +115,10 @@
         <li>Nie ma Backspace. Po błędzie wpisz poprawny znak.</li>
         <li>Esc = zacznij linię od nowa.</li>
         <li>Każda klawiatura ma osobny postęp. Corne to szkic keymapy (<code>keymaps/corne.keymap</code>) — Totem + zewnętrzne kolumny.</li>
-        <li>Słowa pochodzą z Twoich notatek. Układ pochodzi z keymapy ZMK (<span id="src"></span>).</li>
+        <li>Skróty: wciśnij skrót z opisu. Trener liczy, jak go nacisnąć na tej klawiaturze (warstwa + modyfikatory) i podświetla klawisze.
+          Podpowiedź dla opanowanych skrótów pojawia się po 3 s.</li>
+        <li>Słowa: popularne = <a href="https://github.com/hermitdave/FrequencyWords">FrequencyWords</a> (OpenSubtitles, CC BY-SA 4.0);
+          z notatek = <code>js/words.js</code>, tylko lokalnie. Układ pochodzi z keymapy ZMK (<span id="src"></span>).</li>
         <li>Postęp zapisuje się w przeglądarce (localStorage).</li>
       </ul>
     </details>
@@ -104,8 +128,10 @@
 <script src="js/layouts/redox.js"></script>
 <script src="js/layouts/totem.js"></script>
 <script src="js/layouts/corne.js"></script>
+<script src="js/words_common.js"></script>
 <script src="js/words.js"></script>
 <script src="js/snippets.js"></script>
+<script src="js/shortcuts.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

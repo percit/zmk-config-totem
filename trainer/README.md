@@ -14,6 +14,11 @@ Otwórz `index.html` w przeglądarce. Serwer nie jest potrzebny.
 - **Zdania** — wielkie litery i interpunkcja.
 - **Symbole** — fragmenty kodu (warstwa NAV i Shift).
 - **Test 1 min** — wynik w znakach/min.
+- **Skróty** — popularne skróty macOS i nawigacja w tekście (⌘C, ⌥←, ⇧⌘→…). Trener liczy, jak je nacisnąć
+  na wybranej klawiaturze (warstwa + modyfikatory) i pokazuje skróty, których nie da się nacisnąć.
+
+Pod klawiaturą są wszystkie warstwy (BASE, NAV, SYM, ADJ…) i kombinacje (np. Esc = Q+W).
+`compare.html?a=redox&b=totem` — porównanie dwóch układów: ten sam kolor = ta sama funkcja.
 
 ## Odśwież dane
 
@@ -21,7 +26,8 @@ Otwórz `index.html` w przeglądarce. Serwer nie jest potrzebny.
    `tools/export_all.sh`
    Skrypt czyta keymapy z gałęzi tego repo: Redox z `redox`, Totem z `totem`. Corne: `keymaps/corne.keymap` (szkic = Totem + zewnętrzne kolumny).
 2. Po zmianie geometrii: `python3 tools/make_geometry.py` (Redox i Corne z QMK, Totem ręcznie).
-3. Po nowych notatkach wygeneruj słowa (tylko macOS, używa słownika systemu):
+3. Popularne słowa (w repo, CC BY-SA 4.0, FrequencyWords): `python3 tools/build_common_words.py <katalog>` — instrukcja w pliku.
+4. Po nowych notatkach wygeneruj słowa (tylko macOS, używa słownika systemu):
    `python3 tools/build_words.py ~/Downloads/pixel/lifestyle-obsidian ~/github/Notatki`
 
 Uwaga: `js/words.js` powstaje z prywatnych notatek, więc jest w `.gitignore`. Bez niego trener używa zmyślonych słów.

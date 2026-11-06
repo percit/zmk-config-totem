@@ -70,3 +70,24 @@ summary { cursor: pointer; font-weight: 600; }
 .file { border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
 .file input { display: none; }
 code { background: var(--bg); padding: 1px 4px; border-radius: 3px; }
+
+.layers-h { font-size: 16px; margin: 22px 0 6px; color: var(--dim); }
+.layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 14px; }
+.layer { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+.layer h3 { margin: 0 0 4px; font-size: 14px; } .layer h3 small { color: var(--dim); font-weight: 400; }
+.layer svg { width: 100%; }
+.kbd .lt-big { font-size: 30px; font-weight: 600; } .kbd .lt-mid { font-size: 22px; font-weight: 600; }
+.kbd .lt-small { font-size: 17px; font-weight: 600; }
+.kbd .trans rect { fill: #262931 !important; } .kbd .trans text { fill: #6b7280; }
+.kbd .hold rect { stroke: var(--mod); stroke-width: 8; fill: #5a4a1f !important; }
+.kbd .modkey rect { fill: #3d4a63; }
+.combos { color: var(--dim); font-size: 13px; margin-top: 8px; }
+.sc { margin: 22px 0 8px; padding: 14px; background: var(--bg); border-radius: 8px; }
+.sc-top { display: flex; gap: 12px; align-items: center; }
+.sc select, .settings select { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font: inherit; }
+.sc-desc { font-size: 30px; font-weight: 600; margin-top: 12px; }
+.sc-combo { font: 600 26px ui-monospace, Menlo, monospace; color: var(--accent); min-height: 34px; }
+.sc-res { min-height: 22px; }
+.sc-res.ok { color: var(--ok); } .sc-res.bad { color: var(--bad); }
+
+[hidden] { display: none !important; }

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Porównanie układów — Redox vs Totem</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { padding: 18px 24px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--dim); margin-bottom: 14px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .cell { background: var(--panel); border-radius: 10px; padding: 10px 14px; }
+  .cell h2 { font-size: 16px; margin: 0; } .cell h2 small { color: var(--dim); font-weight: 400; }
+  .cell.empty { background: transparent; }
+  .legend2 { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0 16px; font-size: 13px; }
+  .legend2 span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend2 i { width: 16px; height: 16px; border-radius: 4px; display: inline-block; }
+  table.cmp { border-collapse: collapse; font-size: 14px; background: var(--panel); border-radius: 10px; }
+  table.cmp th, table.cmp td { padding: 6px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  table.cmp td.same { color: var(--ok); } table.cmp td.diff { color: var(--mod); }
+  .kbd text.c { fill: #fff; }
+  .kbd .num { fill: #ffffff90; }
+</style>
+</head>
+<body>
+<h1>Redox vs Totem — gdzie są te same funkcje</h1>
+<div class="sub" id="sub"></div>
+<div class="legend2" id="legend"></div>
+<div id="rows"></div>
+<h2 style="font-size:16px">Funkcje: gdzie są na każdej klawiaturze</h2>
+<table class="cmp" id="table"></table>
+
+<script src="js/layouts/redox.js"></script>
+<script src="js/layouts/totem.js"></script>
+<script src="js/compare.js"></script>
+</body>
+</html>

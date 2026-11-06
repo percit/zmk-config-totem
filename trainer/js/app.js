@@ -1,23 +1,41 @@
-// Redox — trener pisania. Logika: generowanie linii, pomiar, odblokowywanie liter, rysowanie.
+// Trener pisania ZMK (Redox / Totem / Corne). Logika: linie, pomiar, odblokowywanie liter, skróty, rysowanie.
 (() => {
   "use strict";
-  const LAYOUTS = window.LAYOUTS, SNIPPETS = window.SNIPPETS;
+  const LAYOUTS = window.LAYOUTS, SNIPPETS = window.SNIPPETS, SHORTCUTS = window.SHORTCUTS || [];
   const LINE = 52, MIN_SAMPLES = 30, PAUSE = 3000, HALF_LIFE = 7 * 864e5, TEST_MS = 60000, MAX_ERRORS = 1000;
   const ORDER = { pl: "aioeznrwsctykdpmuljbghfvxq", en: "etaoinsrhldcumfpgwybvkxjqz" };
   const START = 6;
-  // Słowa z notatek (js/words.js) są tylko lokalnie — repo jest publiczne. Bez nich: zmyślone słowa.
-  const WORDS = window.WORDS || (() => {
-    const fake = (letters) => Array.from({ length: 2000 }, () => {
-      let w = ""; const n = 2 + Math.floor(Math.random() * 6);
-      for (let i = 0; i < n; i++) w += letters[Math.floor(Math.random() * letters.length)];
-      return w;
-    });
-    return { pl: fake(ORDER.pl), en: fake(ORDER.en), fake: true };
-  })();
+  // Słowa: popularne (js/words_common.js, w repo) albo z notatek (js/words.js, tylko lokalnie — repo jest publiczne).
+  const wordCache = {};
+  const fakeWords = (letters) => Array.from({ length: 2000 }, () => {
+    let w = ""; const n = 2 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < n; i++) w += letters[Math.floor(Math.random() * letters.length)];
+    return w;
+  });
+  function words() {
+    const key = `${opt.words}.${opt.lang}`;
+    if (wordCache[key]) return wordCache[key];
+    const c = window.WORDS_COMMON, n = window.WORDS;
+    const src = (opt.words === "notes" ? [n] : opt.words === "both" ? [c, n] : [c]).filter(Boolean).map((x) => x[opt.lang]);
+    let out;
+    if (!src.length) out = fakeWords(ORDER[opt.lang]);
+    else if (src.length === 1) out = src[0];
+    else { // przeplataj po pozycji na liście (częste z obu na początku)
+      const seen = new Set(); out = [];
+      for (let i = 0; i < Math.max(...src.map((l) => l.length)); i++) for (const l of src) if (l[i] && !seen.has(l[i])) { seen.add(l[i]); out.push(l[i]); }
+    }
+    return (wordCache[key] = out);
+  }
   const FINGER = { lk: "lewy mały", lr: "lewy serdeczny", lm: "lewy środkowy", li: "lewy wskazujący", lt: "lewy kciuk",
     rk: "prawy mały", rr: "prawy serdeczny", rm: "prawy środkowy", ri: "prawy wskazujący", rt: "prawy kciuk" };
   const DEFAULTS = { kb: "redox", lang: "pl", mode: "learn", view: "finger", caps: false, punct: false, kbd: true,
-    target: 150, acc: 95, tempo: 60, escape: 15 };
+    target: 150, acc: 95, tempo: 60, escape: 15, words: "common", scGroup: "all" };
+  const MODSYM = { ctrl: "⌃", alt: "⌥", shift: "⇧", meta: "⌘" }, MODNAME = { ctrl: "Ctrl", alt: "Opt", shift: "Shift", meta: "Cmd" };
+  const CODE_SYM = { ArrowLeft: "←", ArrowRight: "→", ArrowUp: "↑", ArrowDown: "↓", Backspace: "⌫", Delete: "⌦", Enter: "⏎",
+    Escape: "Esc", Tab: "⇥", PageUp: "PgUp", PageDown: "PgDn", Slash: "/", BracketLeft: "[", BracketRight: "]", Comma: ",",
+    Period: ".", Backquote: "`", Semicolon: ";", Quote: "'", Minus: "-", Equal: "=", Backslash: "\\", Space: "Space" };
+  const comboText = (code, mods) => ["ctrl", "alt", "shift", "meta"].filter((m) => mods.includes(m)).map((m) => MODSYM[m]).join("")
+    + (CODE_SYM[code] || code.replace(/^(Key|Digit)/, ""));
 
   const $ = (s) => document.querySelector(s);
   const rand = (n) => Math.floor(Math.random() * n);
@@ -82,7 +100,7 @@
   }
 
   // ---------- Generowanie linii ----------
-  const wordsFor = (set) => WORDS[opt.lang].filter((w) => [...w].every((c) => set.includes(c)));
+  const wordsFor = (set) => words().filter((w) => [...w].every((c) => set.includes(c)));
   function pseudo(focus, set) {
     const len = 3 + rand(4), a = [];
     for (let i = 0; i < len; i++) a.push(pick(set));
@@ -121,7 +139,7 @@
   function genWeak() {
     const top = weakWeights();
     if (!top.length) { showMsg("Brak zapisanych pomyłek — ćwiczysz naukę."); return genLearn(); }
-    const total = top.reduce((s, [, w]) => s + w, 0), all = WORDS[opt.lang];
+    const total = top.reduce((s, [, w]) => s + w, 0), all = words();
     const choose = () => { let r = Math.random() * total; for (const [c, w] of top) if ((r -= w) <= 0) return c; return top[0][0]; };
     return fill(() => {
       const c = choose();
@@ -136,7 +154,7 @@
     });
   }
   function genSentences() {
-    const pool = allUnlocked() ? WORDS[opt.lang] : wordsFor(unlockedLetters());
+    const pool = allUnlocked() ? words() : wordsFor(unlockedLetters());
     const src = pool.length ? pool : [pseudo(focusLetter(), unlockedLetters())];
     let line = "";
     for (let tries = 0; tries < 20; tries++) {
@@ -151,8 +169,188 @@
     return line.slice(0, 70);
   }
   const genSymbols = () => fill(() => pick(SNIPPETS));
-  const genTest = () => fill(() => pickFreq(WORDS[opt.lang].slice(0, 300)));
+  const genTest = () => fill(() => pickFreq(words().slice(0, 300)));
   const GEN = { learn: genLearn, weak: genWeak, sentences: genSentences, symbols: genSymbols, test: genTest };
+
+  // ---------- Warstwy i skróty ----------
+  const baseL = () => R.allLayers[0];
+  const layerByName = (n) => R.allLayers.find((l) => l.name === n);
+  function layerAccess(Lr) { // klawisze do przytrzymania, żeby włączyć warstwę
+    if (Lr.name === "BASE") return [];
+    if (Lr.hold != null) return [Lr.hold];
+    if (Lr.cond) { const hs = Lr.cond.map((n) => R.layers[n]); if (hs.every((h) => h != null)) return hs; }
+    return null;
+  }
+  const eff = (Lr, i) => (Lr.keys[i].k === "trans" ? baseL().keys[i] : Lr.keys[i]);
+  const modsOn = (Lr, mod, used) => Lr.keys.map((_, i) => i).filter((i) => !used.includes(i) && eff(Lr, i).k === "mod" && eff(Lr, i).mod === mod);
+  const sameMods = (a, b) => [...a].sort().join() === [...b].sort().join();
+
+  // Jak nacisnąć skrót {code, mods} na tej klawiaturze. Zwraca max 2 sposoby, najprostszy pierwszy.
+  function solve(t) {
+    const cands = [];
+    for (const Lr of R.allLayers) {
+      const acc = layerAccess(Lr); if (!acc) continue;
+      Lr.keys.forEach((_, i) => {
+        if (acc.includes(i)) return;
+        const b = eff(Lr, i);
+        if (b.k !== "key" || !b.act || b.act.code !== t.code || b.act.mods.some((m) => !t.mods.includes(m))) return;
+        const miss = t.mods.filter((m) => !b.act.mods.includes(m));
+        const mods = [], pre = [];
+        for (const m of miss) {
+          const used = [i, ...acc, ...mods, ...pre.map((p) => p.key)];
+          let q = modsOn(Lr, m, used)[0];
+          if (q != null) { mods.push(q); continue; }
+          q = modsOn(baseL(), m, used)[0]; // modyfikator z BASE wciśnięty przed warstwą
+          if (q != null && Lr.name !== "BASE") { pre.push({ key: q, mod: m }); continue; }
+          let found = null; // modyfikator z innej warstwy: przytrzymaj ją, wciśnij mod, puść warstwę
+          for (const L2 of R.allLayers) {
+            const a2 = L2 === Lr || L2.name === "BASE" ? null : layerAccess(L2); if (!a2) continue;
+            const q2 = modsOn(L2, m, [...used, ...a2])[0];
+            if (q2 != null) { found = { key: q2, mod: m, via: L2.name, access: a2 }; break; }
+          }
+          if (!found) return;
+          pre.push(found);
+        }
+        // Klawisz przezroczysty na warstwie bez modyfikatorów z tej warstwy = to samo co BASE, pomiń.
+        if (Lr.name !== "BASE" && Lr.keys[i].k === "trans" && !mods.length) return;
+        cands.push({ layer: Lr.name, acc, mods, pre, key: i, label: b.t,
+          cost: acc.length + mods.length + pre.length + 1 + 0.5 * miss.length + 3 * pre.filter((p) => p.via).length });
+      });
+    }
+    for (const c of R.combos || []) {
+      if (c.act && c.act.code === t.code && sameMods(c.act.mods, t.mods))
+        cands.push({ layer: "BASE", acc: [], mods: [], pre: [], combo: c.keys, label: c.t, cost: 2.5 });
+    }
+    return cands.sort((a, b) => a.cost - b.cost).slice(0, 2);
+  }
+  const kdesc = (i) => `#${i} ${FINGER[R.keys[i].finger]}`;
+  function solText(sol) {
+    const parts = [];
+    for (const p of sol.pre) {
+      if (p.via) parts.push(`przytrzymaj ${p.via} (${p.access.map((i) => "#" + i).join("+")}), wciśnij i trzymaj ${MODNAME[p.mod]} (${kdesc(p.key)}), puść ${p.via}`);
+      else parts.push(`${MODNAME[p.mod]} (${kdesc(p.key)})`);
+    }
+    if (sol.acc.length) parts.push(`przytrzymaj ${sol.layer} (${sol.acc.map(kdesc).join(" + ")})`);
+    for (const m of sol.mods) parts.push(`${eff(layerByName(sol.layer), m).t} (${kdesc(m)})`);
+    if (sol.combo) parts.push(`naciśnij razem ${sol.combo.map((i) => `#${i} ${baseL().keys[i].t}`).join(" + ")}`);
+    else parts.push(`${sol.label} (${kdesc(sol.key)})`);
+    return parts.join(" → ") + (sol.pre.some((p) => p.via) ? "  ⚠️ trudne na tej klawiaturze" : "");
+  }
+  function solHighlight(sol) {
+    if (!sol) return {};
+    return {
+      holds: [...sol.acc, ...sol.pre.filter((p) => p.via).flatMap((p) => p.access)],
+      mods: [...sol.mods, ...sol.pre.map((p) => p.key)],
+      target: sol.combo ? sol.combo : [sol.key],
+    };
+  }
+
+  function kbdViewBox() {
+    const xs = R.keys.flatMap((k) => [k.x, k.x + k.w]), ys = R.keys.flatMap((k) => [k.y, k.y + k.h]);
+    const x0 = Math.min(...xs) - 20, y0 = Math.min(...ys) - 20;
+    return `${x0} ${y0} ${Math.max(...xs) - x0 + 20} ${Math.max(...ys) - y0 + 40}`;
+  }
+  // Rysuje dowolną warstwę (etykiety z keymapy). hl = { holds, mods, target } — indeksy klawiszy.
+  function drawLayer(svg, Lr, hl = {}) {
+    svg.textContent = "";
+    const holds = [...(layerAccess(Lr) || []), ...(hl.holds || [])];
+    R.keys.forEach((k, i) => {
+      const b = Lr.keys[i], cls = ["key"];
+      let text = b.t;
+      if (b.k === "none") cls.push("off");
+      else if (b.k === "trans") { cls.push("trans"); text = baseL().keys[i].t; }
+      else if (b.k === "mod" || b.k === "layer" || b.k === "other") cls.push("modkey");
+      else cls.push("f-" + k.finger);
+      if (holds.includes(i)) cls.push("hold");
+      if ((hl.mods || []).includes(i)) cls.push("mod");
+      if ((hl.target || []).includes(i)) cls.push("target");
+      const cx = k.x + k.w / 2, cy = k.y + k.h / 2;
+      const g = el("g", { class: cls.join(" ") });
+      if (k.r) g.setAttribute("transform", `rotate(${k.r} ${cx} ${cy})`);
+      g.append(el("rect", { x: k.x + 4, y: k.y + 4, width: k.w - 8, height: k.h - 8, rx: 10 }));
+      if (text) {
+        const len = [...text].length;
+        g.append(el("text", { x: cx, y: cy + 2, class: len <= 1 ? "lt-big" : len <= 3 ? "lt-mid" : "lt-small" }, text));
+      }
+      g.append(el("text", { x: k.x + k.w - 10, y: k.y + 18, class: "num" }, i));
+      svg.append(g);
+    });
+  }
+  function renderLayers() {
+    const box = $("#layers"); box.textContent = "";
+    for (const Lr of R.allLayers) {
+      const acc = layerAccess(Lr);
+      let how = "bez przytrzymania";
+      if (Lr.hold != null) how = `przytrzymaj #${Lr.hold} (${FINGER[R.keys[Lr.hold].finger]})`;
+      else if (Lr.cond && acc) how = `przytrzymaj naraz ${Lr.cond.join(" + ")} (${acc.map((i) => "#" + i).join(" + ")})`;
+      else if (Lr.cond) how = Lr.cond.join(", ");
+      const div = document.createElement("div"); div.className = "layer";
+      const h = document.createElement("h3"); h.textContent = Lr.name + " ";
+      const sm = document.createElement("small"); sm.textContent = how; h.append(sm);
+      const svg = document.createElementNS(SVGNS, "svg"); svg.setAttribute("class", "kbd"); svg.setAttribute("viewBox", kbdViewBox());
+      drawLayer(svg, Lr);
+      div.append(h, svg); box.append(div);
+    }
+    if ((R.combos || []).length) {
+      const c = document.createElement("div"); c.className = "combos";
+      c.textContent = "Kombinacje (naciśnij razem): " + R.combos.map((x) => `${x.t} = ${x.keys.map((i) => `#${i} ${baseL().keys[i].t}`).join(" + ")}`).join(" · ");
+      box.append(c);
+    }
+  }
+
+  // ---------- Tryb „Skróty” ----------
+  let SC = null; // { item, sols, shownAt, erred, done, hint, timer }
+  const scId = (s) => s.g + "|" + s.d;
+  const scStat = (id) => ((prog.sc ||= {})[id] ||= { n: 0, ms: 0, err: 0 });
+  const scGroup = () => SHORTCUTS.filter((s) => opt.scGroup === "all" || s.g === opt.scGroup);
+  function nextShortcut() {
+    if (SC && SC.timer) clearTimeout(SC.timer);
+    const all = scGroup().map((s) => ({ s, sols: solve({ code: s.c, mods: s.m }) }));
+    const pool = all.filter((x) => x.sols.length), none = all.filter((x) => !x.sols.length);
+    $("#sc-count").textContent = `${pool.length} skrótów do ćwiczenia`;
+    $("#status").textContent = none.length
+      ? `Nie da się nacisnąć na tej klawiaturze (${none.length}): ` + none.map((x) => `${comboText(x.s.c, x.s.m)} ${x.s.d}`).join(" · ")
+      : "Wszystkie skróty z tej grupy da się nacisnąć.";
+    if (!pool.length) { SC = null; $("#sc-desc").textContent = "Brak skrótów."; return; }
+    const lastId = SC && scId(SC.item);
+    const cand = pool.filter((x) => pool.length === 1 || scId(x.s) !== lastId);
+    const w = cand.map((x) => { const st = scStat(scId(x.s)); return 1 + (st.n < 3 ? 4 : 0) + st.err * 8 + Math.min(st.ms / 1000, 4); });
+    let r = Math.random() * w.reduce((a, b) => a + b, 0), idx = 0;
+    while ((r -= w[idx]) > 0 && idx < w.length - 1) idx++;
+    const { s, sols } = cand[idx], st = scStat(scId(s));
+    const learned = st.n >= 3 && st.err < 0.3;
+    SC = { item: s, sols, shownAt: performance.now(), erred: false, done: false, hint: !learned };
+    if (learned) SC.timer = setTimeout(() => { SC.hint = true; renderShortcut(); }, 3000);
+    $("#sc-res").textContent = ""; $("#sc-res").className = "sc-res";
+    renderShortcut();
+  }
+  function renderShortcut() {
+    if (!SC) return;
+    $("#sc-desc").textContent = SC.item.d;
+    $("#sc-combo").textContent = comboText(SC.item.c, SC.item.m);
+    $("#hint").textContent = SC.hint ? SC.sols.map((x, i) => (i ? "albo: " : "") + solText(x)).join("\n") : "podpowiedź za 3 s…";
+    renderKbd();
+  }
+  function onShortcutKey(e) {
+    if (e.repeat || ["Meta", "Shift", "Alt", "Control", "CapsLock", "Fn", "Dead"].includes(e.key)) return;
+    e.preventDefault();
+    if (!SC || SC.done) return;
+    const mods = ["alt", "ctrl", "meta", "shift"].filter((m) => e[m + "Key"]);
+    const st = scStat(scId(SC.item)), res = $("#sc-res");
+    if (e.code === SC.item.c && sameMods(mods, SC.item.m)) {
+      const dt = Math.min(performance.now() - SC.shownAt, 10000);
+      st.ms = st.n ? 0.8 * st.ms + 0.2 * dt : dt; st.n++;
+      if (!SC.erred) st.err *= 0.85;
+      day().ms += dt; saveProg();
+      SC.done = true; clearTimeout(SC.timer);
+      res.textContent = `✓ ${(dt / 1000).toFixed(1)} s`; res.className = "sc-res ok";
+      setTimeout(() => { nextShortcut(); renderSide(); }, 400);
+    } else {
+      if (!SC.erred) { st.err = 0.85 * st.err + 0.15; SC.erred = true; saveProg(); }
+      res.textContent = `Wciśnięto: ${comboText(e.code, mods)}`; res.className = "sc-res bad";
+      SC.hint = true; clearTimeout(SC.timer); renderShortcut();
+    }
+  }
 
   // ---------- Pisanie ----------
   let L = null; // stan bieżącej linii
@@ -160,6 +358,7 @@
   let justFinished = false;
 
   function newLine() {
+    if (opt.mode === "shortcuts") { nextShortcut(); return; }
     const text = GEN[opt.mode]();
     L = { text, pos: 0, errs: new Set(), start: 0, last: 0, active: 0, ok: 0, bad: 0 };
     render();
@@ -310,6 +509,11 @@
     svg.style.display = opt.kbd ? "" : "none";
     $(".legend").style.display = opt.kbd ? "" : "none";
     if (!opt.kbd) return;
+    if (opt.mode === "shortcuts") {
+      const sol = SC && SC.hint ? SC.sols[0] : null;
+      drawLayer(svg, sol ? layerByName(sol.layer) : baseL(), solHighlight(sol));
+      return;
+    }
     svg.textContent = "";
     const c = L && L.text[L.pos], how = c ? howTo(c) : null;
     const active = new Set(opt.mode === "learn" ? [...unlockedLetters()] : []);
@@ -351,9 +555,8 @@
   // Warstwy, które mają znaki (np. NAV na Redoxie, SYM na Totemie) — max 2 na obrazku.
   const charLayers = () => Object.keys(R.layers).filter((l) => R.labels.some((x) => x.layers && x.layers[l])).slice(0, 2);
   function renderKbdFrame() {
-    const xs = R.keys.flatMap((k) => [k.x, k.x + k.w]), ys = R.keys.flatMap((k) => [k.y, k.y + k.h]);
-    const x0 = Math.min(...xs) - 20, y0 = Math.min(...ys) - 20;
-    $("#kbd").setAttribute("viewBox", `${x0} ${y0} ${Math.max(...xs) - x0 + 20} ${Math.max(...ys) - y0 + 40}`);
+    $("#kbd").setAttribute("viewBox", kbdViewBox());
+    renderLayers();
     const pos = ["prawy dolny róg", "lewy dolny róg"];
     $(".legend").textContent = ["górny lewy róg: Shift", ...charLayers().map((l, j) => `${pos[j]}: ${l} (przytrzymaj #${R.layers[l]})`), "numer klawisza: górny prawy róg"].join(" · ");
     $("#src").textContent = `${R.source}, eksport ${R.exported}`;
@@ -438,7 +641,24 @@
     $("#hist-sum").textContent = `Ostatnie 7 dni: ${a.min} min, śr. ${a.cpm || "–"} zn/min. Poprzednie 7 dni: ${b.min} min, śr. ${b.cpm || "–"} zn/min.`;
   }
 
+  function renderScTable() {
+    $("#conf-title").textContent = "Najsłabsze skróty";
+    const rows = scGroup().map((s) => ({ s, st: (prog.sc || {})[scId(s)] })).filter((x) => x.st && x.st.n)
+      .sort((a, b) => (b.st.err * 8 + b.st.ms / 1000) - (a.st.err * 8 + a.st.ms / 1000)).slice(0, 15);
+    const t = $("#conf"); t.textContent = "";
+    if (!rows.length) { t.innerHTML = "<tr><td class='small'>Brak danych — poćwicz skróty.</td></tr>"; return; }
+    t.innerHTML = "<tr><th>Skrót</th><th>Co robi</th><th>Czas</th><th>Błędy</th></tr>";
+    for (const { s, st } of rows) {
+      const tr = document.createElement("tr");
+      for (const [v, cls] of [[comboText(s.c, s.m), "ch"], [s.d, "small"], [(st.ms / 1000).toFixed(1) + " s", ""], [Math.round(st.err * 100) + "%", ""]]) {
+        const td = document.createElement("td"); td.textContent = v; if (cls) td.className = cls; tr.append(td);
+      }
+      t.append(tr);
+    }
+  }
   function renderConf() {
+    if (opt.mode === "shortcuts") return renderScTable();
+    $("#conf-title").textContent = "Pomyłki";
     const now = Date.now(), agg = {};
     for (const e of prog.errors) {
       const k = e.exp + "\u0000" + e.got;
@@ -460,12 +680,17 @@
   }
 
   function renderSide() {
-    renderLetters();
+    if (opt.mode !== "shortcuts") renderLetters();
     renderHistory();
     renderConf();
     $("#s-today").textContent = fmtTime(day().ms);
   }
   function render() { renderLine(); renderHint(); renderKbd(); }
+  function renderModeUI() {
+    const sc = opt.mode === "shortcuts";
+    $("#sc").hidden = !sc; $("#line").hidden = sc; $("#letters").hidden = sc;
+    $("#hint").style.whiteSpace = sc ? "pre-line" : "";
+  }
 
   function renderControls() {
     document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.mode === opt.mode));
@@ -474,6 +699,10 @@
     document.querySelectorAll("#view button").forEach((b) => b.classList.toggle("on", b.dataset.view === opt.view));
     const f = $("#settings");
     for (const k of ["caps", "punct", "kbd"]) f.elements[k].checked = opt[k];
+    f.elements.words.value = opt.words;
+    for (const o of f.elements.words.options) o.disabled = o.value !== "common" && !window.WORDS;
+    $("#sc-group").value = opt.scGroup;
+    renderModeUI();
     for (const k of ["target", "acc", "tempo", "escape"]) f.elements[k].value = opt[k];
   }
 
@@ -493,7 +722,7 @@
   $("#view").onclick = (e) => { const v = e.target.dataset.view; if (v) { opt.view = v; saveOpt(); renderControls(); renderKbd(); } };
   $("#settings").onchange = (e) => {
     const t = e.target;
-    opt[t.name] = t.type === "checkbox" ? t.checked : Number(t.value) || DEFAULTS[t.name];
+    opt[t.name] = t.type === "checkbox" ? t.checked : t.tagName === "SELECT" ? t.value : Number(t.value) || DEFAULTS[t.name];
     saveOpt(); renderSide(); if (t.name === "kbd") renderKbd(); else newLine();
   };
   $("#unlock-next").onclick = () => { if (!allUnlocked()) { prog.unlocked++; prog.sinceUnlock = 0; saveProg(); newLine(); renderSide(); } };
@@ -519,12 +748,15 @@
   };
   // Po kliknięciu przycisku zdejmij z niego fokus, żeby spacja nie klikała go ponownie.
   document.addEventListener("click", (e) => { if (e.target.closest("button")) e.target.closest("button").blur(); });
+  $("#sc-group").onchange = (e) => { opt.scGroup = e.target.value; saveOpt(); e.target.blur(); nextShortcut(); renderSide(); };
   document.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("input, select, textarea")) return;
+    if (opt.mode === "shortcuts") return onShortcutKey(e);
     if (e.key === "Escape" && test) { e.preventDefault(); resetTest(); newLine(); renderSide(); return; }
     onKey(e);
   });
 
-  if (WORDS.fake) showMsg("Brak js/words.js — ćwiczysz na zmyślonych słowach. Uruchom tools/build_words.py.");
+  if (!window.WORDS && opt.words !== "common") opt.words = "common";
   renderKbdFrame();
   renderControls();
   newLine();

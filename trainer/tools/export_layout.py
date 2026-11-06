@@ -45,6 +45,94 @@ NAMES = {
 }
 
 
+# ZMK keycode -> KeyboardEvent.code (+ Shift dla kodów z wbudowanym Shiftem).
+CODES = {
+    **{c: "Key" + c for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"},
+    **{f"N{d}": f"Digit{d}" for d in range(10)},
+    "MINUS": "Minus", "EQUAL": "Equal", "LBKT": "BracketLeft", "RBKT": "BracketRight",
+    "BSLH": "Backslash", "SEMI": "Semicolon", "SQT": "Quote", "GRAVE": "Backquote",
+    "COMMA": "Comma", "DOT": "Period", "FSLH": "Slash", "SPACE": "Space",
+    "RET": "Enter", "ENTER": "Enter", "BSPC": "Backspace", "DEL": "Delete", "TAB": "Tab", "ESC": "Escape",
+    "LEFT": "ArrowLeft", "RIGHT": "ArrowRight", "UP": "ArrowUp", "DOWN": "ArrowDown",
+    "PG_UP": "PageUp", "PG_DN": "PageDown", "HOME": "Home", "END": "End",
+    **{f"F{i}": f"F{i}" for i in range(1, 13)},
+}
+SHIFTED = {"EXCL": "N1", "AT": "N2", "HASH": "N3", "DLLR": "N4", "PRCNT": "N5", "CARET": "N6",
+           "AMPS": "N7", "STAR": "N8", "LPAR": "N9", "RPAR": "N0", "UNDER": "MINUS", "PLUS": "EQUAL",
+           "LBRC": "LBKT", "RBRC": "RBKT", "PIPE": "BSLH", "COLON": "SEMI", "DQT": "SQT",
+           "TILDE": "GRAVE", "LT": "COMMA", "GT": "DOT", "QMARK": "FSLH"}
+MODKEYS = {"LGUI": "meta", "RGUI": "meta", "LALT": "alt", "RALT": "alt",
+           "LCTRL": "ctrl", "RCTRL": "ctrl", "LSHFT": "shift", "RSHFT": "shift"}
+MODFN = {"LG": "meta", "RG": "meta", "LA": "alt", "RA": "alt", "LC": "ctrl", "RC": "ctrl", "LS": "shift", "RS": "shift"}
+MODSYM = {"ctrl": "⌃", "alt": "⌥", "shift": "⇧", "meta": "⌘"}
+OTHER = {"C_PREV": "⏮", "C_PP": "⏯", "C_NEXT": "⏭", "C_MUTE": "Mute", "C_VOL_UP": "Vol+", "C_VOL_DN": "Vol−",
+         "C_BRI_UP": "Jas+", "C_BRI_DN": "Jas−", "BT_CLR": "BT clr", "OUT_USB": "USB", "OUT_BLE": "BLE",
+         "PG_UP": "PgUp", "PG_DN": "PgDn", "HOME": "Home", "END": "End"}
+
+
+def kp_action(arg):
+    """'LG(LS(Z))' -> ({'code': 'KeyZ', 'mods': ['meta','shift']}, label)."""
+    mods = []
+    while True:
+        m = re.fullmatch(r"(\w+)\((.+)\)", arg)
+        if not m or m.group(1) not in MODFN:
+            break
+        mods.append(MODFN[m.group(1)]); arg = m.group(2)
+    if arg in SHIFTED:
+        mods.append("shift"); base_kc = SHIFTED[arg]
+    else:
+        base_kc = arg
+    if arg in MODKEYS and not mods:
+        return {"mod": MODKEYS[arg]}, NAMES.get(arg, arg)
+    code = CODES.get(base_kc)
+    if arg in CHARS and CHARS[arg][0] != " ":
+        sym = CHARS[arg][0]
+        sym = sym.upper() if sym.isalpha() else sym
+    else:
+        sym = NAMES.get(arg) or OTHER.get(arg) or arg
+    order = ["ctrl", "alt", "shift", "meta"]
+    label = "".join(MODSYM[m] for m in order if m in mods and not (arg in SHIFTED and m == "shift")) + sym
+    act = {"code": code, "mods": sorted(set(mods))} if code else None
+    return act, label
+
+
+def binding_info(b):
+    """Etykieta i akcja jednego bindingu (do obrazków warstw i trenera skrótów)."""
+    kind, arg = b[0], b[1:] 
+    if kind == "&kp":
+        act, label = kp_action(arg[0])
+        if act and "mod" in act:
+            return {"t": label, "k": "mod", "mod": act["mod"]}
+        return {"t": label, "k": "key", "act": act} if act else {"t": label, "k": "other"}
+    if kind == "&mo":
+        return {"t": arg[0], "k": "layer"}
+    if kind == "&trans":
+        return {"t": "", "k": "trans"}
+    if kind == "&none":
+        return {"t": "", "k": "none"}
+    if kind == "&bt":
+        if arg[0] == "BT_SEL":
+            return {"t": f"BT{int(arg[1]) + 1}", "k": "other"}
+        return {"t": OTHER.get(arg[0], arg[0]), "k": "other"}
+    if kind == "&out":
+        return {"t": OTHER.get(arg[0], arg[0]), "k": "other"}
+    names = {"&bootloader": "Boot", "&sys_reset": "Reset"}
+    return {"t": names.get(kind, kind.lstrip("&")), "k": "other"}
+
+
+def parse_combos(text):
+    out = []
+    for m in re.finditer(r"key-positions\s*=\s*<([\d\s]+)>;\s*bindings\s*=\s*<([^>]+)>;", text):
+        info = binding_info(m.group(2).split())
+        out.append({"keys": [int(x) for x in m.group(1).split()], "t": info["t"], "act": info.get("act")})
+    return out
+
+
+def parse_conditional(text):
+    return [{"if": m.group(1).split(), "then": m.group(2).strip()}
+            for m in re.finditer(r"if-layers\s*=\s*<([^>]+)>;\s*then-layer\s*=\s*<([^>]+)>;", text)]
+
+
 def parse_layers(text):
     layers = {}
     for m in re.finditer(r"\{[^{}]*?display-name\s*=\s*\"(\w+)\";.*?bindings\s*=\s*<(.*?)>;", text, re.S):
@@ -133,10 +221,24 @@ def main():
     spaces = find(lambda b: b == ["&kp", "SPACE"])
     chars[" "] = {"key": spaces[0], "alt": spaces[1:]}
 
+    conditional = parse_conditional(text)
+    all_layers = []
+    for lname, binds in layers.items():
+        cond = next((c["if"] for c in conditional if c["then"] == lname), None)
+        hold = holds.get(lname)
+        if lname != "BASE" and hold is None and cond is None:
+            # warstwa włączana inaczej (np. &mo z innej warstwy)
+            src = [(ln, i) for ln, bs in layers.items() for i, b in enumerate(bs) if b[:2] == ["&mo", lname]]
+            cond = [f"{ln} + #{i}" for ln, i in src] or None
+        all_layers.append({"name": lname, "hold": hold, "cond": cond,
+                           "keys": [binding_info(b) for b in binds]})
+
     data = {
         "name": name, "source": source, "exported": date.today().isoformat(),
         "keys": keys, "labels": labels, "chars": chars,
         "layers": {l: h for l, h in holds.items()},
+        "allLayers": all_layers,
+        "combos": parse_combos(text),
     }
     out = ROOT / "js" / "layouts" / f"{name}.js"
     out.parent.mkdir(exist_ok=True)
